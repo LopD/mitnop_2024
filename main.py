@@ -1,10 +1,18 @@
 
-#%% improts
+#%% 
 
+import Eksplorativna_analiza
 
-#%% main function
+## standardni importi
+import pandas as pd
+import matplotlib.pyplot as plt
+
+#%% glavna funkcija
 if __name__ == '__main__':
     
-    print('put your code here')
+    ## df je dataframe koji koristimo za obuku mreza
+    df = Eksplorativna_analiza.izvrsi_eksplorativnu_analizu()
+    
+    ## ubaci svoj kod ovdje
 
 
