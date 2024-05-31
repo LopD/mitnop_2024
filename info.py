@@ -69,8 +69,12 @@ df = pd.read_csv('Crime_Data_from_2020_to_Present.csv')
 #%% drop columns
 df = df[columns_to_keep]
 
+
 #%% drop NA values for longitude
 df = df.drop(SelectWhereLATIsNullOrLONIsNull(df).index)
+# #%% 
+# print(SelectWhereLATIsNullOrLONIsNull(df))
+
 
 #%% get needed columns
 df = GetExactTimeOfCrimeOccurrenceInMinutes(df,new_column_name = 'TIME OCC min')

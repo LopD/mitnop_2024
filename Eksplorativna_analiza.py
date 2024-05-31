@@ -11,7 +11,7 @@
 # 2. Creation of a multi-layer neural network
 # 3. Visualization of the temporal data model
 
-#%% Importi
+#%% Imports
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -153,3 +153,16 @@ plt.ylabel('Broj krivičnih dela')
 plt.xticks(range(len(hour_labels)), hour_labels, rotation=45)
 plt.tight_layout()
 plt.show()
+
+# #%% tmp
+# palette = sns.color_palette("husl", len(crime_per_quarter['YEAR OCC'].unique()))
+
+# plt.figure(figsize=(12, 8))
+# sns.barplot(data=crime_per_quarter, x='QUARTER OCC', y='Count', hue='YEAR OCC', palette=palette)
+# plt.title('Number of Crimes per Quarter with Different Colors for Each Year')
+# plt.xlabel('Quarter')
+# plt.ylabel('Number of Crimes')
+# plt.legend(title='Year', loc='upper left')
+# plt.xticks(rotation=45)
+# plt.tight_layout()
+# plt.show()
