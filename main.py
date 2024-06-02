@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 if __name__ == '__main__':
     
     ## df je dataframe koji koristimo za obuku mreza
-    df = Eksplorativna_analiza.izvrsi_eksplorativnu_analizu()
+    data = Eksplorativna_analiza.izvrsi_eksplorativnu_analizu()
     
     ## ubaci svoj kod ovdje
 
