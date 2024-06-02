@@ -42,6 +42,7 @@ def GetExactTimeOfCrimeOccurrenceInMinutesSinceEpoch(df,new_column_name = 'TOTAL
     df[new_column_name] = (df['TIME OCC'].astype(int)%60).astype(int)
     df[new_column_name] +=  (df['TIME OCC']/100).astype(int)*60
     ## up to this day
+    # print(df.dtypes)
     df[new_column_name] += (df['DATE OCC'].dt.year - 1970) * 525948
     df[new_column_name] += (df['DATE OCC'].dt.month - 1) * 43829
     df[new_column_name] += (df['DATE OCC'].dt.day - 1) * 1440

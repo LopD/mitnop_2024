@@ -11,10 +11,13 @@
 # 2. Creation of a multi-layer neural network
 # 3. Visualization of the temporal data model
 
-#%% Imports
+#%% Importi
 
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
+
+
 
 def izvrsi_eksplorativnu_analizu(plot=False):
     '''Vraca dataframe sa kolonama koje ce se koristiti pri obuci neuronskih mreza'''    
@@ -50,9 +53,13 @@ def izvrsi_eksplorativnu_analizu(plot=False):
     
     print(missing_values)
     
+    print(df)
+    
 #%% Brisanje redova gdje su koordinate ne postojece 
     df = df.drop(df.loc[ (df['LAT'] == df['LON'])  & (df['LAT'] == 0) ].index)
 
+    print(df)
+    
 #%% Parsiranje datuma i vremena u skupu podataka
     
     try:
@@ -66,25 +73,25 @@ def izvrsi_eksplorativnu_analizu(plot=False):
     data['HOUR OCC'] = data['TIME OCC'].apply(lambda x: int(str(x).zfill(4)[:2]))
     data['QUARTER OCC'] = data['DATE OCC'].dt.to_period('Q')
     
-    if (plot):
 #%% Identifikacija ključnih parametara za kreiranje istarživanja
+
+    # Provera broja različitih vrednosti za kolonu 'AREA'
+    area_unique_count = data['AREA'].nunique()
+    print(f"Broj različitih vrednosti u koloni 'AREA': {area_unique_count}")
     
-        # Provera broja različitih vrednosti za kolonu 'AREA'
-        area_unique_count = data['AREA'].nunique()
-        print("Broj različitih vrednosti u koloni 'AREA': ", data['AREA'].nunique())
-        
-        # Provera broja različitih vrednosti za kolonu 'LOCATION'
-        location_unique_count = data['LOCATION'].nunique()
-        print(f"Broj različitih vrednosti u koloni 'LOCATION': {location_unique_count}")
-        
-        # Provera broja različitih vrednosti za kolonu 'Rpt Dist No'
-        rpt_dist_unique_count = data['Rpt Dist No'].nunique()
-        print(f"Broj različitih vrednosti u koloni 'Rpt Dist No': {rpt_dist_unique_count}")
-        
-        # Provera broja različitih vrednosti za kolonu 'Crm Cd'
-        crmcd_dist_unique_count = data['Crm Cd'].nunique()
-        print(f"Broj različitih vrednosti u koloni 'Crm Cd': {crmcd_dist_unique_count}")
-        
+    # Provera broja različitih vrednosti za kolonu 'LOCATION'
+    location_unique_count = data['LOCATION'].nunique()
+    print(f"Broj različitih vrednosti u koloni 'LOCATION': {location_unique_count}")
+    
+    # Provera broja različitih vrednosti za kolonu 'Rpt Dist No'
+    rpt_dist_unique_count = data['Rpt Dist No'].nunique()
+    print(f"Broj različitih vrednosti u koloni 'Rpt Dist No': {rpt_dist_unique_count}")
+    
+    # Provera broja različitih vrednosti za kolonu 'Crm Cd'
+    crmcd_dist_unique_count = data['Crm Cd'].nunique()
+    print(f"Broj različitih vrednosti u koloni 'Crm Cd': {crmcd_dist_unique_count}")
+    
+    if (plot):
 #%% Distribucija zločina prema tipu zločina #1
         
         # Provera broja različitih vrednosti za kolonu 'Crm Cd Desc'
@@ -149,7 +156,7 @@ def izvrsi_eksplorativnu_analizu(plot=False):
         plt.show()
         
 #%% Distribucija zločina prema vremena dešavanja u toku dana
-        
+    
         plt.figure(figsize=(10, 6))
         hour_counts = data['HOUR OCC'].value_counts().sort_index()
         hour_labels = [f"{hour:02}:00" for hour in hour_counts.index]
@@ -160,6 +167,57 @@ def izvrsi_eksplorativnu_analizu(plot=False):
         plt.xticks(range(len(hour_labels)), hour_labels, rotation=45)
         plt.tight_layout()
         plt.show()
-        
+    
     return data
+
+# %% Dodatna obrada skupa podataka i generisanje heat mape
+
+def filter_top_crimes(df, top_n=20):
+    '''Filters the dataframe to only include the top N crime types by frequency'''
+    top_crime_types = df['Crm Cd Desc'].value_counts().head(top_n).index
+    return df[df['Crm Cd Desc'].isin(top_crime_types)]
+
+def generisi_heat_mapu(df, output_file='heatmap_of_LA.html'):
+    '''Generates a heatmap of crimes with customized parameters and saves it to an HTML file.'''
+    
+    import folium as folium
+    from folium.plugins import MarkerCluster, HeatMap
+    
+    df = filter_top_crimes(df)
+    
+    # Kreiranje baze za toplotnu mapu
+    # Postavljanjem koordinata na ovu vrednost centriramo mapu na prikaz Los Angeles-a
+    mapa = folium.Map(location=[34.0522, -118.2437], zoom_start=10)
+    
+    # Pripremanje podataka za prikaz - bazirano na geog. dužini i širini
+    heat_data = [[row['LAT'], row['LON']] for index, row in df.iterrows()]
+
+    # Definisan veci spektar boja kako bi se na krupnom planu
+    # podaci iole normalno prikazali
+    gradient = {
+        0.2: 'blue',
+        0.4: 'lime',
+        0.6: 'yellow',
+        0.8: 'orange',
+        1.0: 'red'
+    }
+
+    # Dodaje se sloj za prikaz na mapi sa custom podesavanjima radi boljeg prikaza
+    HeatMap(heat_data, radius=10, blur=5, max_zoom=1, min_opacity=0.3, gradient=gradient).add_to(mapa)
+    
+    # Dodavanje markera za obeležavanje oblasti grada
+    area_groups = df.groupby(['AREA', 'AREA NAME']).first().reset_index()
+    for _, row in area_groups.iterrows():
+        folium.Marker(
+            location=[row['LAT'], row['LON']],
+            popup=f"Area {row['AREA']}: {row['AREA NAME']}",
+            icon=folium.Icon(color='blue')
+            ).add_to(mapa)
+    
+    # Definise se apsolutna putanja koju koristimo za čuvanje mape
+    absolute_path = os.path.join(os.getcwd(), output_file)
+    
+    # Čivanje toplotne mape u obliku HTML fajla
+    mapa.save(absolute_path)
+    print(f"Heat map saved to {absolute_path}")
     
