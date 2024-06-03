@@ -6,24 +6,126 @@ import folium
 from folium.plugins import HeatMap
 from tensorflow.keras.models import save_model
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #%% Main funkcija - poziva zasebne fajlove od kojih je svaki vezan za jedan deo istraživanja
-if __name__ == '__main__':
+def testiraj_Neuronsku_mrezu():##SAVINO
 
     data = ea.izvrsi_eksplorativnu_analizu()
-#%% 
+##%% 
+    generis_heat_mapu = False
     # Generisanje heat mape
-    output_file_name = 'heatmap_of_LA.html'
-    ea.generisi_heat_mapu(data=data, top_n=20, output_file=output_file_name)
-#%%  
+    if generis_heat_mapu:
+        output_file_name = 'heatmap_of_LA.html'
+        ea.generisi_heat_mapu(data=data, top_n=20, output_file=output_file_name)
+##%%  
     # Priprema podataka
     pripremljeni_podaci = nm.priprema_podataka(data)
-#%%     
+##%%     
     # Kreiranje i treniranje modela
     model, scaler_X, scaler_y, X_test, y_test, history = nm.kreiraj_i_treniraj_model(pripremljeni_podaci)
-#%%    
+##%%    
     # Čuvanje modela
     save_model(model, 'crime_prediction_model.keras')
-#%%    
+##%%    
     # Predikcija i evaluacija
     y_pred_rescaled, y_test_rescaled = nm.predikcija(model, scaler_y, X_test, y_test)
     
