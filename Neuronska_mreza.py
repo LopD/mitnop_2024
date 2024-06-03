@@ -5,10 +5,13 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import LabelEncoder
+from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 import matplotlib.pyplot as plt
-import seaborn as sns
+import folium
+import os
+from folium.plugins import HeatMap
 
 # %% Pripremanje podataka
 
@@ -55,10 +58,7 @@ def kreiraj_i_treniraj_model(data):
     
     return model, scaler_X, scaler_y, X_test, y_test, history
 
-# %% Predikcija koriscenjem modela
-  
 def predikcija(model, scaler_y, X_test, y_test):
-
     # Predikcija na test setu
     y_pred = model.predict(X_test)
     y_pred_rescaled = scaler_y.inverse_transform(y_pred)
@@ -66,8 +66,8 @@ def predikcija(model, scaler_y, X_test, y_test):
     
     # Prikaz rezultata
     plt.figure(figsize=(10, 6))
-    plt.scatter(y_test_rescaled[:, 0], y_test_rescaled[:, 1], color='blue', label='Actual', alpha=0.6)
-    plt.scatter(y_pred_rescaled[:, 0], y_pred_rescaled[:, 1], color='red', label='Predicted', alpha=0.6)
+    plt.scatter(y_test_rescaled[:, 0], y_test_rescaled[:, 1], color='blue', label='Actual', alpha=0.2)
+    plt.scatter(y_pred_rescaled[:, 0], y_pred_rescaled[:, 1], color='red', label='Predicted', alpha=0.1)
     plt.xlabel('LAT')
     plt.ylabel('LON')
     plt.title('Actual vs Predicted Locations')

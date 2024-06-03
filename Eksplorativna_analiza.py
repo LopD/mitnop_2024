@@ -1,42 +1,32 @@
-#%% MITNOP_project
-# Name: Prediction of crimes
-
-# Common tasks:
-# • Data filtering and preprocessing 
-# • Intercomparison of neural networks (depending on which 
-#   we received as a task) and temporal data model
-
-# Savo Savić:
-# 1. Exploratory analysis and creation of a temporal data model
-# 2. Creation of a multi-layer neural network
-# 3. Visualization of the temporal data model
-
 #%% Importi
 
 import os
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
-
+import folium as folium
+from folium.plugins import HeatMap
 
 def izvrsi_eksplorativnu_analizu(plot=False):
-    '''Vraca dataframe sa kolonama koje ce se koristiti pri obuci neuronskih mreza'''    
+    '''Vraca dataframe sa kolonama koje ce se koristiti pri obuci neuronskih mreza'''  
+    
 #%% Čitanje podataka iz .CSV fajla
     
-    df = pd.read_csv('Crime_Data_from_2020_to_Present.csv')
+    data = pd.read_csv('Crime_Data_from_2020_to_Present.csv')
     
+    # Eksplorativna analiza
     print("Prvih nekoliko redova skupa podataka:")
-    print(df.head())
+    print(data.head())
     
     print("Osnovna statistika numeričkih kolona:")
-    print(df.describe())
+    print(data.describe())
     
     print("Osnovne informacije o skupu podataka:")
-    print(df.info())
+    print(data.info())
     
 #%% Provera postojanja nedostajućih vrednosti u skupu
     
-    missing_values = df.isna().sum()
+    missing_values = data.isna().sum()
     
     print(missing_values)
     
@@ -47,18 +37,19 @@ def izvrsi_eksplorativnu_analizu(plot=False):
                         'Weapon Desc', 'Crm Cd 1', 'Crm Cd 2',
                         'Crm Cd 3', 'Crm Cd 4', 'Cross Street']
     
-    data = df.drop(columns = columns_for_drop)
+    data = data.drop(columns = columns_for_drop)
     
     missing_values = data.isna().sum()
     
     print(missing_values)
     
-    print(df)
+    print(data)
     
 #%% Brisanje redova gdje su koordinate ne postojece 
-    df = df.drop(df.loc[ (df['LAT'] == df['LON'])  & (df['LAT'] == 0) ].index)
-
-    print(df)
+    
+    data = data.drop(data.loc[(data['LAT'] == data['LON']) & (data['LAT'] == 0)].index)
+    
+    print(data)
     
 #%% Parsiranje datuma i vremena u skupu podataka
     
@@ -69,12 +60,11 @@ def izvrsi_eksplorativnu_analizu(plot=False):
     
     data['YEAR OCC'] = data['DATE OCC'].dt.year
     data['MONTH OCC'] = data['DATE OCC'].dt.month
-    data['DAY OCC'] = data['DATE OCC'].dt.day
     data['HOUR OCC'] = data['TIME OCC'].apply(lambda x: int(str(x).zfill(4)[:2]))
     data['QUARTER OCC'] = data['DATE OCC'].dt.to_period('Q')
     
 #%% Identifikacija ključnih parametara za kreiranje istarživanja
-
+    
     # Provera broja različitih vrednosti za kolonu 'AREA'
     area_unique_count = data['AREA'].nunique()
     print(f"Broj različitih vrednosti u koloni 'AREA': {area_unique_count}")
@@ -91,13 +81,13 @@ def izvrsi_eksplorativnu_analizu(plot=False):
     crmcd_dist_unique_count = data['Crm Cd'].nunique()
     print(f"Broj različitih vrednosti u koloni 'Crm Cd': {crmcd_dist_unique_count}")
     
-    if (plot):
 #%% Distribucija zločina prema tipu zločina #1
-        
-        # Provera broja različitih vrednosti za kolonu 'Crm Cd Desc'
-        crime_type_counts = df['Crm Cd Desc'].value_counts()
-        print(crime_type_counts.head(15))
-        
+    
+    # Provera broja različitih vrednosti za kolonu 'Crm Cd Desc'
+    crime_type_counts = data['Crm Cd Desc'].value_counts()
+    print(crime_type_counts.head(15))
+    
+    if(plot):
         plt.figure(figsize=(15, 8))
         crime_type_counts.plot(kind='bar')
         plt.title('Distribucija zločina prema tipu zločina')
@@ -106,17 +96,19 @@ def izvrsi_eksplorativnu_analizu(plot=False):
         plt.xticks(rotation=45, ha='right')
         plt.tight_layout()
         plt.show()
-        
+    
 #%% Distribucija zločina prema tipu zločina #2
-        
-        # Nakon prikazivanja podataka uočeno je da je spektar tipova 
-        # zločina u odnosu na frekvenciju njihovog desavanja u gradu 
-        # tolike teritorije preveliki pa je posmatranje distribucije
-        # zločina prema tipu bazirano na one bitne i najučestalije
-        
-        # Izaberite nekoliko najčešćih vrsta krivičnih dela za plotovanje
-        top_crime_types = crime_type_counts.head(20)
-        
+    
+    # Nakon prikazivanja podataka uočeno je da je spektar tipova 
+    # zločina u odnosu na frekvenciju njihovog desavanja u gradu 
+    # tolike teritorije preveliki pa je posmatranje distribucije
+    # zločina prema tipu bazirano na one bitne i najučestalije
+    
+    # Izaberite nekoliko najčešćih vrsta krivičnih dela za plotovanje
+    top_crime_types = crime_type_counts.head(20)
+    data_top_crimes = data[data['Crm Cd Desc'].isin(top_crime_types.index)]
+    
+    if(plot):
         plt.figure(figsize=(15, 10))
         top_crime_types.plot(kind='bar')
         plt.title('Distribucija zločina prema tipu zločina')
@@ -125,9 +117,10 @@ def izvrsi_eksplorativnu_analizu(plot=False):
         plt.xticks(rotation=45, ha='right')
         plt.tight_layout()
         plt.show()
-        
+    
 #%% Distribucija zločina prema oblasti u kojoj su se desili
-        
+
+    if(plot):
         plt.figure(figsize=(12, 8))
         data['AREA NAME'].value_counts().plot(kind='bar')
         plt.title('Distribucija zločina prema oblasti u kojoj su se desili')
@@ -136,64 +129,54 @@ def izvrsi_eksplorativnu_analizu(plot=False):
         plt.xticks(rotation=90)
         plt.tight_layout()
         plt.show()
-        
+    
 #%% Distribucija zločina prema godini dešavanja
-        
+    
+    if(plot):
         plt.figure(figsize=(10, 6))
-        data['YEAR OCC'].value_counts().sort_index().plot(kind='bar')
-        plt.title('Distribucija zločina prema godini dešavanja')
+        data_top_crimes = data[data['Crm Cd Desc'].isin(top_crime_types.index)]
+        data_top_crimes['YEAR OCC'].value_counts().sort_index().plot(kind='bar')
+        plt.title('Distribucija zločina prema godini dešavanja (Top 20)')
         plt.xlabel('Godina dešavanja')
         plt.ylabel('Broj krivičnih dela')
         plt.show()
-        
+    
 #%% Distribucija zločina prema mesecu dešavanja
-        
+    
+    if(plot):
         plt.figure(figsize=(10, 6))
-        data['MONTH OCC'].value_counts().sort_index().plot(kind='bar')
-        plt.title('Distribucija zločina prema mesecu dešavanja')
+        data_top_crimes['MONTH OCC'].value_counts().sort_index().plot(kind='bar')
+        plt.title('Distribucija zločina prema mesecu dešavanja (Top 20)')
         plt.xlabel('Mesec dešavanja')
         plt.ylabel('Broj krivičnih dela')
         plt.show()
-        
+    
 #%% Distribucija zločina prema vremena dešavanja u toku dana
     
+    if(plot):
         plt.figure(figsize=(10, 6))
-        hour_counts = data['HOUR OCC'].value_counts().sort_index()
-        hour_labels = [f"{hour:02}:00" for hour in hour_counts.index]
-        hour_counts.plot(kind='bar')
-        plt.title('Distribucija zločina prema vremena dešavanja u toku dana')
+        hour_counts_top = data_top_crimes['HOUR OCC'].value_counts().sort_index()
+        hour_labels_top = [f"{hour:02}:00" for hour in hour_counts_top.index]
+        hour_counts_top.plot(kind='bar')
+        plt.title('Distribucija zločina prema vremenu dešavanja u toku dana (Top 20)')
         plt.xlabel('Sat dešavanja')
         plt.ylabel('Broj krivičnih dela')
-        plt.xticks(range(len(hour_labels)), hour_labels, rotation=45)
+        plt.xticks(range(len(hour_labels_top)), hour_labels_top, rotation=45)
         plt.tight_layout()
         plt.show()
-    
-    return data
+
+    return data_top_crimes
 
 # %% Dodatna obrada skupa podataka i generisanje heat mape
 
-def filter_top_crimes(df, top_n=20):
-    '''Filters the dataframe to only include the top N crime types by frequency'''
-    top_crime_types = df['Crm Cd Desc'].value_counts().head(top_n).index
-    return df[df['Crm Cd Desc'].isin(top_crime_types)]
-
-def generisi_heat_mapu(df, output_file='heatmap_of_LA.html'):
-    '''Generates a heatmap of crimes with customized parameters and saves it to an HTML file.'''
+def generisi_heat_mapu(data, top_n, output_file):
+    top_crime_types = data['Crm Cd'].value_counts().head(top_n).index
+    data = data[data['Crm Cd'].isin(top_crime_types)]
     
-    import folium as folium
-    from folium.plugins import MarkerCluster, HeatMap
-    
-    df = filter_top_crimes(df)
-    
-    # Kreiranje baze za toplotnu mapu
-    # Postavljanjem koordinata na ovu vrednost centriramo mapu na prikaz Los Angeles-a
     mapa = folium.Map(location=[34.0522, -118.2437], zoom_start=10)
     
-    # Pripremanje podataka za prikaz - bazirano na geog. dužini i širini
-    heat_data = [[row['LAT'], row['LON']] for index, row in df.iterrows()]
-
-    # Definisan veci spektar boja kako bi se na krupnom planu
-    # podaci iole normalno prikazali
+    heat_data = [[row['LAT'], row['LON']] for index, row in data.iterrows()]
+    
     gradient = {
         0.2: 'blue',
         0.4: 'lime',
@@ -202,22 +185,10 @@ def generisi_heat_mapu(df, output_file='heatmap_of_LA.html'):
         1.0: 'red'
     }
 
-    # Dodaje se sloj za prikaz na mapi sa custom podesavanjima radi boljeg prikaza
     HeatMap(heat_data, radius=10, blur=5, max_zoom=1, min_opacity=0.3, gradient=gradient).add_to(mapa)
     
-    # Dodavanje markera za obeležavanje oblasti grada
-    area_groups = df.groupby(['AREA', 'AREA NAME']).first().reset_index()
-    for _, row in area_groups.iterrows():
-        folium.Marker(
-            location=[row['LAT'], row['LON']],
-            popup=f"Area {row['AREA']}: {row['AREA NAME']}",
-            icon=folium.Icon(color='blue')
-            ).add_to(mapa)
     
-    # Definise se apsolutna putanja koju koristimo za čuvanje mape
     absolute_path = os.path.join(os.getcwd(), output_file)
     
-    # Čivanje toplotne mape u obliku HTML fajla
     mapa.save(absolute_path)
     print(f"Heat map saved to {absolute_path}")
-    
