@@ -7,13 +7,14 @@ import matplotlib.pyplot as plt
 import folium as folium
 from folium.plugins import HeatMap
 
+
 def izvrsi_eksplorativnu_analizu(plot=False):
     '''Vraca dataframe sa kolonama koje ce se koristiti pri obuci neuronskih mreza'''  
     
 #%% Čitanje podataka iz .CSV fajla
     
     data = pd.read_csv('Crime_Data_from_2020_to_Present.csv')
-    
+
     # Eksplorativna analiza
     print("Prvih nekoliko redova skupa podataka:")
     print(data.head())

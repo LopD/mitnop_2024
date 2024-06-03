@@ -30,7 +30,7 @@ def priprema_podataka(data):
 
 # %% Kreiranje modela
 
-def kreiraj_i_treniraj_model(data):
+def kreiraj_i_treniraj_model(data,epochs=10):
     X = data.drop(columns=['LAT', 'LON'])
     y = data[['LAT', 'LON']]
     
@@ -54,7 +54,7 @@ def kreiraj_i_treniraj_model(data):
     model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_absolute_error'])
     
     # Treniranje modela
-    history = model.fit(X_train, y_train, epochs=100, batch_size=32, validation_split=0.2)
+    history = model.fit(X_train, y_train, epochs=epochs, batch_size=32, validation_split=0.2)
     
     return model, scaler_X, scaler_y, X_test, y_test, history
 
@@ -80,3 +80,13 @@ def predikcija(model, scaler_y, X_test, y_test):
     print('Root Mean Squared Error:', np.sqrt(mean_squared_error(y_test_rescaled, y_pred_rescaled)))
 
     return y_pred_rescaled, y_test_rescaled
+
+#%% 
+def prikazi_istoriju_ucenja(istorija):
+    import matplotlib.pyplot as plt
+    plt.plot(istorija.history['loss'])
+    plt.title('model preciznost')
+    plt.ylabel('preciznost (gubitak detalja)')
+    plt.xlabel('epohe')
+    plt.show()
+        

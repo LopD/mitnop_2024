@@ -6,6 +6,8 @@ import numpy as np
 
 from RNN_data_preprocessing import *
 
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
 
 #%% class declaration
 
@@ -34,7 +36,7 @@ class SimpleMaskedRNN:
         
 
 #%% function definition
-def GetSimpleMaskedRNNWithTrainingHistory(df = None,epochs=3, timeseries_batch_size= 10, timepoints_per_day= 24 ):
+def GetSimpleMaskedRNNWithTrainingHistory(df = None,epochs=3, timeseries_batch_size= 24, timepoints_per_day= 24 ):
     ''' returns the 'SimpleRNN' object with its training history 
     don't change timeseries_batch_size= 10, timepoints_per_day= 24 since I hard coded it to read from a csv file so I don't have to re-create it each time I make a change to the model
     '''
@@ -50,7 +52,24 @@ def GetSimpleMaskedRNNWithTrainingHistory(df = None,epochs=3, timeseries_batch_s
         # print(df)
         df.loc[df['AVAILABLE MASK'] == 0] = 0 ## set the rows with missing values to all be equal to 0 (0 is the set mask value in the neural network class)
         # print(df)
+        
+        
+    input_columns = ['YEAR OCC','MONTH OCC','DAY OCC','HOUR OCC','AREA','Crm Cd']
+    target_columns = ['LAT','LON']
     
+    # ##ADDED
+    # label_encoder = LabelEncoder()
+    # df['AREA'] = label_encoder.fit_transform(df['AREA'])
+    # df['Crm Cd'] = label_encoder.fit_transform(df['Crm Cd'])
+    # # Skaliranje podataka
+    # scaler_X = StandardScaler()
+    # df[input_columns] = scaler_X.fit_transform(df[input_columns])
+    
+    # scaler_y = StandardScaler()
+    # df[target_columns] = scaler_y.fit_transform(df[target_columns])
+    # ##-------
+        
+        
 
     ## %% train and validation split
     train_to_validation_split = 0.9
@@ -64,10 +83,7 @@ def GetSimpleMaskedRNNWithTrainingHistory(df = None,epochs=3, timeseries_batch_s
     ## these 2 paramaters are now function paramaters
     timepoints_per_day = 24 ## overwritting it because I forgot that I should not overwrite it
     timeseries_sequence_length = timepoints_per_day 
-    timeseries_batch_size = timepoints_per_day
-    
-    input_columns = ['YEAR OCC','MONTH OCC','DAY OCC','HOUR OCC','AREA','Crm Cd']
-    target_columns = ['LAT','LON']
+    # timeseries_batch_size = timepoints_per_day
     
     train_data = tf.keras.preprocessing.timeseries_dataset_from_array(
         data= train_df[input_columns],
@@ -111,4 +127,4 @@ def GetSimpleMaskedRNNWithTrainingHistory(df = None,epochs=3, timeseries_batch_s
 if __name__ == '__main__':
     # import Eksplorativna_analiza
     # data = Eksplorativna_analiza.izvrsi_eksplorativnu_analizu()
-    rnn_masked, training_hitstory = GetSimpleMaskedRNNWithTrainingHistory()
+    rnn_masked, training_history = GetSimpleMaskedRNNWithTrainingHistory()

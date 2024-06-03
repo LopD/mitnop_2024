@@ -6,6 +6,9 @@ import numpy as np
 
 from RNN_data_preprocessing import *
 
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
+
 #%%
 
 class SimpleRNN:
@@ -50,6 +53,21 @@ def GetSimpleRNNWithTrainingHistory(df=None,epochs=3, timeseries_batch_size= 10,
     # print(df[['TIME OCC', 'DATE OCC', 'DATE TIME OCC']])
     # print(df.dtypes)
     
+    input_columns = ['TIME DIFFERENCE minutes','YEAR OCC','MONTH OCC','DAY OCC','HOUR OCC','AREA','Crm Cd']
+    target_columns = ['LAT','LON']
+    
+    # ##ADDED
+    # label_encoder = LabelEncoder()
+    # df['AREA'] = label_encoder.fit_transform(df['AREA'])
+    # df['Crm Cd'] = label_encoder.fit_transform(df['Crm Cd'])
+    # # Skaliranje podataka
+    # scaler_X = StandardScaler()
+    # df[input_columns] = scaler_X.fit_transform(df[input_columns])
+    
+    # scaler_y = StandardScaler()
+    # df[target_columns] = scaler_y.fit_transform(df[target_columns])
+    # ##-------
+    
     ##%% train and validation split
     train_to_validation_split = 0.9
     train_df = df.loc[ (df['DATE OCC'].dt.year >= 2023) 
@@ -64,8 +82,6 @@ def GetSimpleRNNWithTrainingHistory(df=None,epochs=3, timeseries_batch_size= 10,
     # timeseries_sequence_length = 5
     # timeseries_batch_size = 10
     
-    input_columns = ['TIME DIFFERENCE minutes','YEAR OCC','MONTH OCC','DAY OCC','HOUR OCC','AREA','Crm Cd']
-    target_columns = ['LAT','LON']
     
     train_data = tf.keras.preprocessing.timeseries_dataset_from_array(
         data= train_df[input_columns],
