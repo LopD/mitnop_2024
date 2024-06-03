@@ -43,7 +43,7 @@ if __name__ == '__main__':
         predikcije.append([pred[0], pred[1]])
 
     # Generisanje HeatMap za predviđene zločine
-    heat_map = HeatMap(predikcije, radius=10, blur=15, max_zoom=1, min_opacity=0.5, name='Predicted Crimes')
+    heat_map = HeatMap(predikcije, radius=10, blur=8, max_zoom=1, min_opacity=0.45, name='Predicted Crimes')
     heat_map.add_to(m)
 
     # Čuvanje mape kao HTML
