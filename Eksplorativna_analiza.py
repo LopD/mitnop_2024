@@ -19,11 +19,11 @@ import matplotlib.pyplot as plt
 
 
 
-def izvrsi_eksplorativnu_analizu(plot=False):
+def izvrsi_eksplorativnu_analizu(file_name='Crime_Data_from_2020_to_Present.csv',plot=False):
     '''Vraca dataframe sa kolonama koje ce se koristiti pri obuci neuronskih mreza'''    
 #%% Čitanje podataka iz .CSV fajla
     
-    df = pd.read_csv('Crime_Data_from_2020_to_Present.csv')
+    df = pd.read_csv(file_name)
     
     print("Prvih nekoliko redova skupa podataka:")
     print(df.head())

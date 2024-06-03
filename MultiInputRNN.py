@@ -6,6 +6,9 @@ import numpy as np
 
 from RNN_data_preprocessing import *
 
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
+
 
 #%% class declaration
 
@@ -67,6 +70,25 @@ def GetSimpleMaskedRNNWithTrainingHistory(df = None,epochs=3, timeseries_batch_s
         # print(df)
     
 
+    rnn_input_columns = ['YEAR OCC','MONTH OCC','DAY OCC','HOUR OCC','AREA','Crm Cd']
+    rnn_target_columns = ['LAT','LON']
+    dense_input_columns = ['YEAR OCC','MONTH OCC','DAY OCC','HOUR OCC','AREA','Crm Cd']
+    dense_target_columns = rnn_target_columns ## must be the same as target columns
+    
+    # ##ADDED
+    # label_encoder = LabelEncoder()
+    # df['AREA'] = label_encoder.fit_transform(df['AREA'])
+    # df['Crm Cd'] = label_encoder.fit_transform(df['Crm Cd'])
+    
+    # # Skaliranje podataka
+    # scaler_X = StandardScaler()
+    # df[input_columns] = scaler_X.fit_transform(df[input_columns])
+    
+    # scaler_y = StandardScaler()
+    # df[target_columns] = scaler_y.fit_transform(df[target_columns])
+    # ##-------
+    
+
     ## %% train and validation split
     train_to_validation_split = 0.9
     train_df = df
@@ -83,8 +105,6 @@ def GetSimpleMaskedRNNWithTrainingHistory(df = None,epochs=3, timeseries_batch_s
     
     #####################
     ## RNN INPUT (can't put timeseries object, they must be tensors)
-    rnn_input_columns = ['YEAR OCC','MONTH OCC','DAY OCC','HOUR OCC','AREA','Crm Cd']
-    rnn_target_columns = ['LAT','LON']
     
     ## X value for RNN training
     rnn_train_data_input = np.array(train_df[rnn_input_columns ]).copy()
@@ -129,8 +149,6 @@ def GetSimpleMaskedRNNWithTrainingHistory(df = None,epochs=3, timeseries_batch_s
     
     #####################
     ## DENSE LAYER INPUT
-    dense_input_columns = ['YEAR OCC','MONTH OCC','DAY OCC','HOUR OCC','AREA','Crm Cd']
-    dense_target_columns = rnn_target_columns ## must be the same as target columns
     
     ## X value for Dense NN training
     dense_train_data_input = np.array(train_df[dense_input_columns ][dim2::dim2] ) ## WILL CRASH IF YOU DON'T CHECK THE DF SHAPES
