@@ -75,8 +75,8 @@ def _getDataframeWithMaskedInput(df, timepoints_per_day = 24, mask_column_name='
     # df = df.drop(columns=['index']) ## TODO:remove this
     df = df.sort_values(by='DATE TIME OCC')
     df = df.reset_index(drop=True)
-    print(df['DATE TIME OCC'][0])
-    print(df['DATE TIME OCC'][df.shape[0]-1])
+    # print(df['DATE TIME OCC'][0])
+    # print(df['DATE TIME OCC'][df.shape[0]-1])
     # df = df[0:200]
     first_date = df['DATE TIME OCC'][0]
     last_date = df['DATE TIME OCC'][df.shape[0]-1]
@@ -221,3 +221,75 @@ def GetDataFrameWithMask():
         return new_df 
 
 
+
+
+
+def GetDataFrameWithMaskForYear2022():
+    import Eksplorativna_analiza 
+    
+    loaded_df = None
+    try:
+        loaded_df = pd.read_csv('masked_RNN_input_value0_masked_rows_24_timepoints_2022.csv')
+        loaded_df['DATE TIME OCC'] = pd.to_datetime(loaded_df['DATE TIME OCC']
+                                                    ,format='%Y-%m-%d %H:%M:%S'
+                                                    ,errors='coerce' ## we have some 0 fields in the DATE TIME OCC column since we mask the input
+                                                    )
+        return loaded_df
+    except:
+        ## the csv does not exist so you must create it
+        loaded_df = Eksplorativna_analiza.izvrsi_eksplorativnu_analizu()        
+        # print("TODO: uncomment it")
+        # drop columns
+        # print(df.columns)
+        # df = data
+        # df = df.drop(columns=[ 'Date Rptd', 'DATE OCC', 'AREA NAME',
+        #         'Rpt Dist No', 'Part 1-2', 'Crm Cd Desc', 'Vict Age',
+        #         'Status', 'Status Desc', 'LOCATION', 'YEAR OCC',
+        #         'MONTH OCC', 'DAY OCC', 'QUARTER OCC'])
+        # print(df.columns) ##['DR_NO', 'AREA', 'Crm Cd', 'LAT', 'LON', 'HOUR OCC', 'DATE TIME OCC'] are left
+        # filter
+        # print(df.shape)
+        loaded_df = Eksplorativna_analiza.izvrsi_eksplorativnu_analizu()
+        loaded_df = GetExactTimeOfCrimeOccurrence(loaded_df, new_column_name = 'DATE TIME OCC')
+        loaded_df = loaded_df.loc[ (loaded_df['DATE TIME OCC'].dt.year == 2022 )]
+        # df = df.loc[ (df['DATE TIME OCC'].dt.year == 2024 ) & (df['DATE TIME OCC'].dt.month == 1 ) & (df['DATE TIME OCC'].dt.day <= 15 )]
+        # df = df.loc[ (df['DATE TIME OCC'].dt.year == 2024 ) ]
+        ##getting the data 
+        # print(df.shape)
+        # print("-------------------------")
+        new_df = _getDataframeWithMaskedInput(loaded_df ,timepoints_per_day = 24)
+        # print(new_df.shape)
+        # # print("-------------------------")
+        # print(new_df)
+        # # print("-------------------------")
+        # print(new_df.dtypes)
+        # # print("-------------------------")
+        new_df.to_csv('masked_RNN_input_value0_masked_rows_24_timepoints_2022.csv',index=False)
+        return new_df 
+
+def GetTimeSeriesArrayFromArray(array,timepoints_per_day,timeseries_batch_size):
+    '''Transforms the given array to a time series-like array for feeding it to the fit function of a keras model'''
+    
+    ts = keras.utils.timeseries_dataset_from_array(data= array
+        ,targets= None
+        ,sequence_length= timepoints_per_day
+        ,batch_size= timeseries_batch_size)
+    
+    ##
+    ts_as_array = []
+    for i in ts:
+        i = np.array(i)
+        for j in i:
+            ts_as_array.append(j)
+    
+    length = len(ts_as_array)
+    ts_as_array_item_shape = ts_as_array[0].shape
+    
+    # if 
+    ts_as_array = np.array(ts_as_array).reshape( (length, ts_as_array_item_shape[0],ts_as_array_item_shape[1]) )
+    # print(len(ts_as_array))
+    # print(ts_as_array.shape)
+    # print(ts_as_array[0].shape)
+    
+    return ts_as_array
+    

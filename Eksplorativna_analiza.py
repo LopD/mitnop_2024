@@ -4,8 +4,8 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import folium as folium
-from folium.plugins import HeatMap
+# import folium as folium
+# from folium.plugins import HeatMap
 
 
 def izvrsi_eksplorativnu_analizu(plot=False):
@@ -61,6 +61,7 @@ def izvrsi_eksplorativnu_analizu(plot=False):
     
     data['YEAR OCC'] = data['DATE OCC'].dt.year
     data['MONTH OCC'] = data['DATE OCC'].dt.month
+    data['DAY OCC'] = data['DATE OCC'].dt.day
     data['HOUR OCC'] = data['TIME OCC'].apply(lambda x: int(str(x).zfill(4)[:2]))
     data['QUARTER OCC'] = data['DATE OCC'].dt.to_period('Q')
     
@@ -174,7 +175,8 @@ def generisi_heat_mapu(data, top_n, output_file):
     top_crime_types = data['Crm Cd'].value_counts().head(top_n).index
     data = data[data['Crm Cd'].isin(top_crime_types)]
     
-    mapa = folium.Map(location=[34.0522, -118.2437], zoom_start=10)
+    ##TODO: Add this back
+    # mapa = folium.Map(location=[34.0522, -118.2437], zoom_start=10)
     
     heat_data = [[row['LAT'], row['LON']] for index, row in data.iterrows()]
     
@@ -185,11 +187,11 @@ def generisi_heat_mapu(data, top_n, output_file):
         0.8: 'orange',
         1.0: 'red'
     }
-
-    HeatMap(heat_data, radius=10, blur=5, max_zoom=1, min_opacity=0.3, gradient=gradient).add_to(mapa)
+    ##TODO: Add this back
+    # HeatMap(heat_data, radius=10, blur=5, max_zoom=1, min_opacity=0.3, gradient=gradient).add_to(mapa)
     
     
     absolute_path = os.path.join(os.getcwd(), output_file)
     
-    mapa.save(absolute_path)
+    # mapa.save(absolute_path)
     print(f"Heat map saved to {absolute_path}")

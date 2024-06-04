@@ -14,24 +14,6 @@ def testiraj_single_layer_NN(epochs=10):
     singleLayerNN,singleLayerNN_training_history = single_layer_NN.GetSimple1LayerNNWithTrainingHistory(epochs=epochs)
     prikazi_istoriju_ucenja(singleLayerNN_training_history )
 
-#%%
-def testiraj_simple_RNN_time_difference(epochs=10):
-    import simple_RNN_time_difference
-    rnn,training_history = simple_RNN_time_difference.GetSimpleRNNWithTrainingHistory(epochs=epochs)
-    prikazi_istoriju_ucenja(training_history )
-
-#%%
-def testiraj_MaskedRNN(epochs=10):
-    import MaskedRNN
-    rnn_masked, training_history = MaskedRNN.GetSimpleMaskedRNNWithTrainingHistory(epochs=epochs)
-    prikazi_istoriju_ucenja(training_history )
-
-#%%
-def testiraj_MultiInputRNN(epochs=10):
-    import MultiInputRNN
-    multi_rnn, training_hitstory = MultiInputRNN.GetSimpleMaskedRNNWithTrainingHistory(epochs=epochs)
-    prikazi_istoriju_ucenja(training_hitstory  )
-
 
 #%% Main funkcija - poziva zasebne fajlove od kojih je svaki vezan za jedan deo istraživanja
 def testiraj_Neuronsku_mrezu(epochs=10):
@@ -97,25 +79,49 @@ def testiraj_Neuronsku_mrezu(epochs=10):
 #         y_pred_rescaled, y_test_rescaled = nm.predikcija(model, scaler_y, X_test, y_test)
 # ##%%  prikaz preciznosti kroz ucenje
     prikazi_istoriju_ucenja(history)
+
+
+#%% testing RNN 
+def testRNNModels(plotTrainingHistory=False,save_model=False,save_history=False):
+    RNN_epochs = 100
+    RNN_batch_size = 32
+    timeseries_batch_size = 32
     
+    import simple_RNN_time_difference
+    simple_RNN_time_difference.testSimpleRNNTimeDifference(
+        save_model= save_model 
+        ,save_history= save_history 
+        ,epochs=RNN_epochs 
+        ,batch_size=RNN_batch_size 
+        ,timeseries_batch_size= 32
+        )
+    
+
+    import MaskedRNN
+    MaskedRNN.testSimpleMaskedRNN(
+        save_model= save_model 
+        ,save_history= save_history 
+        ,epochs= RNN_epochs 
+        ,batch_size= RNN_batch_size 
+        ,timeseries_batch_size= timeseries_batch_size 
+        )
+    
+    import MultiInputRNN
+    MultiInputRNN.testMultiInputRNN(
+        save_model= save_model 
+        ,save_history= save_history 
+        ,epochs= RNN_epochs 
+        ,batch_size= RNN_batch_size 
+        ,timeseries_batch_size= timeseries_batch_size 
+        )
+    
+    if (plotTrainingHistory):
+        import PlotRNNTrainingHistory
+        PlotRNNTrainingHistory.plotRNNModelsLoss()
+
 
 #%% Main funkcija - poziva zasebne fajlove od kojih je svaki vezan za jedan deo istraživanja
 if __name__ == '__main__':
-    broj_epoha_za_guste_NN = 3
-    broj_epoha_za_RNN = 3
-    broj_epoha_za_vremenskeserije_RNN = 3
-    
-##%% prikazuje i testira viseslojnu neuronsku mrezu 
-    # testiraj_Neuronsku_mrezu(epochs=broj_epoha_za_guste_NN )
+    testRNNModels(plotTrainingHistory=True,save_model=True,save_history=True)
 
-##%% prikaz preciznost kroz ucenje 1slojne
-    testiraj_single_layer_NN(epochs=broj_epoha_za_guste_NN )
-    
-##%%
-    # testiraj_simple_RNN_time_difference(epochs=broj_epoha_za_RNN )
-
-##%%
-    # testiraj_MaskedRNN(epochs=broj_epoha_za_vremenskeserije_RNN  )
-    
-    # testiraj_MultiInputRNN(epochs=100)
 

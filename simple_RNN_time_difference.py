@@ -8,6 +8,7 @@ from RNN_data_preprocessing import *
 
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler
+# import Eksplorativna_analiza
 
 #%%
 
@@ -35,7 +36,7 @@ class SimpleRNN:
 
 
 #%% function definition
-def GetSimpleRNNWithTrainingHistory(df=None,epochs=3, timeseries_batch_size= 10, timeseries_sequence_length= 5 ):
+def GetSimpleRNNWithTrainingHistory(df=None,epochs=3, timeseries_batch_size= 32, timeseries_sequence_length= 5, batch_size=32 ):
     ''' returns the  'SimpleRNN' object with its training history 
     'timeseries_sequence_length' can be set to practicaly anything since we use the time difference in minutes between instances'''
 
@@ -44,14 +45,14 @@ def GetSimpleRNNWithTrainingHistory(df=None,epochs=3, timeseries_batch_size= 10,
     if (df == None):
         import Eksplorativna_analiza
         df = Eksplorativna_analiza.izvrsi_eksplorativnu_analizu()
-        
+    
+    df = df.loc[ (df['DATE OCC'].dt.year >= 2023) 
+                & (df['DATE OCC'].dt.year <= 2024) ]
+    
     df = GetExactTimeOfCrimeOccurrence(df,new_column_name = 'DATE TIME OCC')
     df = GetExactTimeOfCrimeOccurrenceInMinutes(df,new_column_name = 'TIME OCC minutes')
     df = GetExactTimeOfCrimeOccurrenceInMinutesSinceEpoch(df,new_column_name = 'TOTAL TIME OCC minutes')
     df = GetTimeDifferenceInMinutes(df,new_column_name = 'TIME DIFFERENCE minutes')
-    # print(df[['TOTAL TIME OCC minutes','TIME DIFFERENCE minutes']])
-    # print(df[['TIME OCC', 'DATE OCC', 'DATE TIME OCC']])
-    # print(df.dtypes)
     
     input_columns = ['TIME DIFFERENCE minutes','YEAR OCC','MONTH OCC','DAY OCC','HOUR OCC','AREA','Crm Cd']
     target_columns = ['LAT','LON']
@@ -117,83 +118,120 @@ def GetSimpleRNNWithTrainingHistory(df=None,epochs=3, timeseries_batch_size= 10,
     training_history = rnn.model.fit(train_data
                                      , epochs= epochs
                                      , shuffle= False
-                                     , validation_data= validation_data )
+                                     , validation_data= validation_data
+                                     , batch_size=batch_size) 
     
     return rnn,training_history 
+
+#%%
+def GetSimpleRNNEvaluation(rnn_model,df = None,timeseries_batch_size= 32,timeseries_sequence_length= 5,batch_size=32):
     
+    if (df == None):
+        import Eksplorativna_analiza
+        df = Eksplorativna_analiza.izvrsi_eksplorativnu_analizu()
+
+    df = df.loc[ (df['DATE OCC'].dt.year == 2022) 
+                & (df['DATE OCC'].dt.month == 1) ]
+    
+    df = GetExactTimeOfCrimeOccurrence(df,new_column_name = 'DATE TIME OCC')
+    df = GetExactTimeOfCrimeOccurrenceInMinutes(df,new_column_name = 'TIME OCC minutes')
+    df = GetExactTimeOfCrimeOccurrenceInMinutesSinceEpoch(df,new_column_name = 'TOTAL TIME OCC minutes')
+    df = GetTimeDifferenceInMinutes(df,new_column_name = 'TIME DIFFERENCE minutes')
+    
+    input_columns = ['TIME DIFFERENCE minutes','YEAR OCC','MONTH OCC','DAY OCC','HOUR OCC','AREA','Crm Cd']
+    target_columns = ['LAT','LON']
+    
+    # ##ADDED
+    # label_encoder = LabelEncoder()
+    # df['AREA'] = label_encoder.fit_transform(df['AREA'])
+    # df['Crm Cd'] = label_encoder.fit_transform(df['Crm Cd'])
+    # # Skaliranje podataka
+    # scaler_X = StandardScaler()
+    # df[input_columns] = scaler_X.fit_transform(df[input_columns])
+    
+    # scaler_y = StandardScaler()
+    # df[target_columns] = scaler_y.fit_transform(df[target_columns])
+    # ##-------
+    
+    ## create time series
+    # timeseries_sequence_length = timepoints_per_day 
+    
+    test_data_input = tf.keras.preprocessing.timeseries_dataset_from_array(
+        data= df[input_columns],
+        targets= df[target_columns],
+        sequence_length= timeseries_sequence_length,
+        batch_size= timeseries_batch_size 
+        )
+    
+    evaluation_result = rnn_model.evaluate(x=test_data_input
+                                           ,batch_size= batch_size)
+    return evaluation_result 
+
+#%% 
+
+def trainSimpleRNN(save_model=False,save_history=False,epochs=10,batch_size=32,timeseries_batch_size= 32):
+    
+    rnn,training_history = GetSimpleRNNWithTrainingHistory(epochs= epochs
+                                                            ,batch_size= batch_size
+                                                            ,timeseries_batch_size= timeseries_batch_size
+                                                            ,timeseries_sequence_length= 5)
+    
+    if (save_model):        
+        rnn.model.save("saved_models/SimpleRNN.keras")
+    
+    if (save_history):
+        training_history_df = pd.DataFrame(training_history.history)
+        training_history_fname = 'saved_models/SimpleRNN_history.csv'
+        with open(training_history_fname, mode='w') as f:
+            training_history_df.to_csv(f)
+    return rnn, training_history
+
+
+
+def evalueateSimpleRNN(rnn_model= None, save_history=False, timeseries_batch_size= 32,batch_size=32):    
+
+    if (rnn_model== None):
+        rnn_model = keras.models.load_model('saved_models/SimpleRNN.keras')    
+    evaluation_result = GetSimpleRNNEvaluation(rnn_model
+                                               ,timeseries_batch_size= timeseries_batch_size
+                                               ,batch_size= batch_size
+                                               ,timeseries_sequence_length= 5
+                                               )
+    
+    if (save_history):
+        evaluation_result_dictionary = {'loss': evaluation_result[0], 'mse': evaluation_result[1] }
+        evaluation_result_df = pd.DataFrame(data=evaluation_result_dictionary,dtype=float,index=[0])
+        evaluation_result_fname = 'saved_models/SimpleRNN_evaluation_result.csv'
+        with open(evaluation_result_fname, mode='w') as f:
+            evaluation_result_df.to_csv(f)
+    
+    return evaluation_result
+
+    
+#%% 
+def testSimpleRNNTimeDifference(save_model=False,save_history=False,epochs=10,batch_size=32,timeseries_batch_size= 32):
+    rnn, training_history = trainSimpleRNN(save_model=save_model
+                                            ,save_history=save_history
+                                            ,epochs= epochs
+                                            ,batch_size= batch_size
+                                            ,timeseries_batch_size= timeseries_batch_size
+                                            )
+    evaluation_result = evalueateSimpleRNN(rnn_model= rnn.model
+                                           ,save_history= save_history
+                                           ,timeseries_batch_size= timeseries_batch_size
+                                           ,batch_size= batch_size
+                                           )
 
 #%% main function
 if __name__ == '__main__':
-    # import Eksplorativna_analiza
-    # data = Eksplorativna_analiza.izvrsi_eksplorativnu_analizu()
-    rnn,training_history = GetSimpleRNNWithTrainingHistory(epochs=3)
-    
-    
-    
-    
-#%% old
-    
-    # #%%
-    # # from keras.src import ops
-    # # from keras.src.layers import RNN
-    # import tensorflow as tf
-    # import keras
-    
-    # #%%
-    # # First, let's define a RNN Cell, as a layer subclass.
-    # class MinimalRNNCell(keras.layers.Layer):
-    
-    #     def __init__(self, units, **kwargs):
-    #         super().__init__(**kwargs)
-    #         self.units = units
-    #         self.state_size = units
-    
-    #     def build(self, input_shape):
-    #         self.kernel = self.add_weight(shape=(input_shape[-1], self.units),
-    #                                       initializer='uniform',
-    #                                       name='kernel')
-    #         self.recurrent_kernel = self.add_weight(
-    #             shape=(self.units, self.units),
-    #             initializer='uniform',
-    #             name='recurrent_kernel')
-    #         self.built = True
-    
-    #     def call(self, inputs, states):
-    #         prev_output = states[0]
-    #         h = tf.matmul(inputs, self.kernel)
-    #         output = h + tf.matmul(prev_output, self.recurrent_kernel)
-    #         return output, [output]
-    
-    # # Let's use this cell in a RNN layer:
-    
-    # #%% simple rnn 1 cell
-    # # cell = MinimalRNNCell(32)
-    # # x = keras.Input((None, 5))
-    # # layer = keras.layers.RNN(cell)
-    # # y = layer(x)
-    
-    # #%% my rnn
-    # cell = MinimalRNNCell(32)
-    # cells = [MinimalRNNCell(32), MinimalRNNCell(64), MinimalRNNCell(64)]
-    # # mymodel = keras.models.Sequential()
-    # # mymodel.add(keras.layers.RNN(cell))
-    # # mymodel.build((1, 10, 1))
-    # # print(mymodel.summary())
-    # inputlayer = keras.Input((10, 1))
-    # rnnlayer = keras.layers.RNN(cells) (inputlayer)
-    # denselayer = keras.layers.Dense(4) (rnnlayer)
-    # outputlayer =  denselayer
-    
-    # mymodel = keras.Model(inputlayer , outputlayer )
-    # print(mymodel.summary())
-    
-    # #%% fitting
-    
-    
-    # #%% stacked
-    # # Here's how to use the cell to build a stacked RNN:
-    
-    # cells = [MinimalRNNCell(32), MinimalRNNCell(64)]
-    # x = keras.Input((None, 5))
-    # layer = keras.layers.RNN(cells)
-    # y = layer(x)
+    rnn, training_history = trainSimpleRNN(save_model=False
+                                            ,save_history=False
+                                            ,epochs=10
+                                            ,batch_size=32
+                                            ,timeseries_batch_size= 32
+                                            )
+    evaluation_result = evalueateSimpleRNN(rnn_model= rnn.model
+                                           ,save_history=True
+                                           ,timeseries_batch_size= 32
+                                           ,batch_size=32
+                                           )
